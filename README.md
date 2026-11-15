@@ -2,7 +2,7 @@
 
 An interactive, single-file HTML dashboard that turns a trading journal into an R-multiple calendar, equity curve and weekly distribution, with a toggle between two outcome models (3R and 2R).
 
-**Live demo:** https://YOUR-USERNAME.github.io/trading-performance-journal/
+**Live demo:** https://Francisos1234.github.io/trading-performance-journal/
 
 > Built by **Francis Chizurumoke** with AI-assisted coding (ChatGPT and Claude). My contribution: data collection, workflow design, data preparation and validation, and specifying the metrics.
 
