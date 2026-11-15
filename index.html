@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trading Performance Analysis Portfolio | Francis Chizurumoke</title>
+<meta name="description" content="Interactive R-multiple calendar, equity curve and weekly distribution built from a 139-trade journal, with a 3R / 2R outcome-model toggle. By Francis Chizurumoke.">
+<meta name="author" content="Francis Chizurumoke">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta property="og:title" content="Trading Performance Analysis Portfolio">
+<meta property="og:description" content="Interactive R-multiple calendar, equity curve and weekly distribution from a 139-trade journal.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a84ff'/%3E%3Cpath d='M6 22l6-7 5 4 9-11' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* ═══ RR Calendar — design tokens, light and dark ═══ */
+:root{
+  --sansfont:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;
+  --monofont:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --bg:#000; --panel:#1c1c1e; --panel2:#2c2c2e; --line:rgba(255,255,255,.10);
+  --text:#f5f5f7; --dim:#a1a1a6; --dim2:#8e8e93;
+  --green:#30d158; --red:#ff453a; --accent:#0a84ff; --flat:#636366;
+  --g1:#0a84ff; --g2:#bf5af2; --g3:#ff9f0a;
+  --nav:rgba(28,28,30,.72); --seg:rgba(118,118,128,.24); --seg-on:#636366;
+  --shadow:none; --shadow-md:0 16px 48px rgba(0,0,0,.6); --thumb:0 1px 3px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f5f5f7; --panel:#ffffff; --panel2:#f5f5f7; --line:rgba(0,0,0,.08);
+    --text:#1d1d1f; --dim:#6e6e73; --dim2:#8e8e93;
+    --green:#248a3d; --red:#d70015; --accent:#0071e3; --flat:#aeaeb2;
+    --g1:#0071e3; --g2:#af52de; --g3:#ff9f0a;
+    --nav:rgba(251,251,253,.72); --seg:rgba(118,118,128,.12); --seg-on:#ffffff;
+    --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.04); --shadow-md:0 2px 6px rgba(0,0,0,.06),0 16px 40px rgba(0,0,0,.12); --thumb:0 1px 3px rgba(0,0,0,.14),0 1px 1px rgba(0,0,0,.06);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f5f5f7; --panel:#ffffff; --panel2:#f5f5f7; --line:rgba(0,0,0,.08);
+  --text:#1d1d1f; --dim:#6e6e73; --dim2:#8e8e93;
+  --green:#248a3d; --red:#d70015; --accent:#0071e3; --flat:#aeaeb2;
+  --g1:#0071e3; --g2:#af52de; --g3:#ff9f0a;
+  --nav:rgba(251,251,253,.72); --seg:rgba(118,118,128,.12); --seg-on:#ffffff;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.04); --shadow-md:0 2px 6px rgba(0,0,0,.06),0 16px 40px rgba(0,0,0,.12); --thumb:0 1px 3px rgba(0,0,0,.14),0 1px 1px rgba(0,0,0,.06);
+  color-scheme:light;
+}
+*{margin:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);transition:background .25s,color .25s}
+body{font-family:var(--sansfont);font-size:14px;line-height:1.45;letter-spacing:-.005em;padding:max(28px,env(safe-area-inset-top)) 24px 72px;max-width:1180px;margin:0 auto;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+button{font:inherit;color:inherit;cursor:pointer}
+.num{font-family:var(--monofont);font-variant-numeric:tabular-nums}
+.pos{color:var(--green)} .neg{color:var(--red)} .flat{color:var(--dim)}
+
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.sub{color:var(--dim);font-size:14px;margin-top:6px}
+.iconbtn{background:var(--seg);border:none;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:500;color:var(--accent);transition:background .15s,transform .12s}
+.iconbtn:hover{filter:brightness(1.1)} .iconbtn:active{transform:scale(.97)}
+
+/* source note */
+.source-note{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 20px;box-shadow:var(--shadow);font-size:12.5px;line-height:1.65;color:var(--dim)}
+.source-note b{color:var(--text);font-weight:600}
+
+/* controls — frosted, sticky */
+.controls{position:sticky;top:0;z-index:20;background:var(--nav);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;padding:12px 16px;margin:16px -16px 0;border-bottom:1px solid var(--line);border-radius:0 0 18px 18px}
+.ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ctl .cl{font-size:12px;font-weight:500;color:var(--dim)}
+.seg{display:inline-flex;background:var(--seg);border-radius:9px;padding:2px;gap:2px}
+.seg button{border:0;background:transparent;padding:5px 18px;border-radius:7px;font-size:13px;font-weight:500;color:var(--dim);transition:all .18s}
+.seg button[aria-pressed="true"]{background:var(--seg-on);color:var(--text);font-weight:600;box-shadow:var(--thumb)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:8px;background:var(--seg);border:1.5px solid transparent;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:500;color:var(--dim);transition:all .18s}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--c);opacity:.35;transition:opacity .18s}
+.chip small{font-size:11px;color:var(--dim2)}
+.chip[aria-pressed="true"]{color:var(--text);border-color:var(--c);background:var(--panel)}
+.chip[aria-pressed="true"] .dot{opacity:1}
+.chip:focus-visible,.seg button:focus-visible,.cell.has:focus-visible,.iconbtn:focus-visible,.mbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.linkbtn{background:none;border:0;color:var(--accent);font-size:13px;padding:4px;font-weight:500}
+
+/* stats */
+.statrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin:24px 0 32px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px 18px;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
+.stat:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.stat .k{font-size:12px;font-weight:500;color:var(--dim);margin-bottom:8px}
+.stat .v{font-size:24px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
+.stat .v.sm{font-size:19px}
+.stat .s{font-size:11.5px;color:var(--dim2);margin-top:6px}
+
+section.block{margin-bottom:36px}
+.blocktitle{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
+.blocksub{font-size:13px;color:var(--dim);margin-bottom:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px 10px 10px;position:relative;box-shadow:var(--shadow)}
+.legend{display:flex;gap:18px;font-size:12px;color:var(--dim);padding:0 12px 8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.legend i.dd{height:10px;opacity:.35;background:var(--red)}
+#equity{width:100%}
+#equity svg{display:block;width:100%;height:auto}
+#weekchart{width:100%;overflow-x:auto;overflow-y:hidden}
+#weekchart svg{display:block}
+.wk-bar{cursor:default;transition:opacity .15s}
+.wk-bar:hover{opacity:.75}
+.empty-note{padding:44px 10px;text-align:center;color:var(--dim);font-size:13.5px}
+.tip{position:fixed;pointer-events:none;background:var(--nav);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:12px;line-height:1.6;color:var(--text);box-shadow:var(--shadow-md);z-index:60;display:none;white-space:nowrap}
+
+/* calendar */
+.monthhead{display:flex;justify-content:space-between;align-items:baseline;margin:30px 0 12px;gap:10px;flex-wrap:wrap}
+.monthhead h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.monthhead .mstat{font-size:12.5px;color:var(--dim);font-family:var(--monofont)}
+.monthgrid{display:grid;grid-template-columns:repeat(7,1fr) 96px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow)}
+.dow{padding:10px 6px;font-size:11.5px;font-weight:600;color:var(--dim);text-align:center;background:var(--panel2);border-bottom:1px solid var(--line)}
+.cell{min-height:70px;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px 9px;position:relative;text-align:left;background:transparent;display:block;width:100%;transition:box-shadow .15s}
+.cell:nth-child(8n){border-right:none}
+.cell.empty{background:var(--panel2);opacity:.4}
+.cell .d{font-size:11.5px;font-weight:500;color:var(--dim)}
+.cell .rr{font-size:15px;font-weight:600;margin-top:5px}
+.cell .n{font-size:10.5px;color:var(--dim2);margin-top:2px}
+.cell.has{cursor:pointer;background:linear-gradient(180deg,color-mix(in srgb,var(--c) var(--i),transparent) 0%,transparent 82%)}
+.cell.has:hover{box-shadow:inset 0 0 0 2px var(--c)}
+.wkcell{min-height:70px;padding:7px 10px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;border-bottom:1px solid var(--line);background:var(--panel2)}
+.wkcell .lbl{font-size:10.5px;font-weight:500;color:var(--dim2)}
+.wkcell .v{font-size:15px;font-weight:700;margin-top:3px}
+.nodata{color:var(--dim2)}
+
+/* day detail dialog */
+dialog{margin:auto;border:1px solid var(--line);border-radius:24px;background:var(--panel);color:var(--text);width:min(680px,calc(100vw - 24px));max-height:calc(100vh - 40px);padding:0;overflow:hidden;box-shadow:var(--shadow-md)}
+dialog::backdrop{background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%)}
+dialog[open]{display:flex;flex-direction:column;animation:sheetIn .28s cubic-bezier(.2,.9,.3,1.1)}
+@keyframes sheetIn{from{transform:scale(.96) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.mh{display:flex;align-items:center;gap:10px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.mh h3{font-size:18px;font-weight:700;letter-spacing:-.02em;flex:1}
+.mh .tot{font-size:20px;font-weight:700}
+.mbtn{background:var(--seg);border:none;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;font-size:14px;color:var(--dim);transition:background .15s}
+.mbtn:hover:not(:disabled){color:var(--text);filter:brightness(1.15)} .mbtn:disabled{opacity:.3;cursor:default}
+.mbody{overflow:auto;padding:6px 20px 20px}
+.msum{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--dim);padding:12px 0}
+.msum b{color:var(--text);font-family:var(--monofont)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11.5px;font-weight:600;color:var(--dim);text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+th.r,td.r{text-align:right}
+td .gd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:var(--c)}
+td.act{background:color-mix(in srgb,var(--accent) 12%,transparent);font-weight:600}
+td.side{font-size:12px;color:var(--dim)}
+.hint{font-size:11.5px;color:var(--dim2);padding-top:12px}
+
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.sitefoot{margin-top:56px;padding-top:24px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.7;color:var(--dim)}
+.sitefoot .byline{color:var(--text);font-weight:600;font-size:13.5px;margin-bottom:6px}
+.sitefoot nav{display:flex;flex-wrap:wrap;gap:6px 20px;margin:10px 0 14px}
+.sitefoot a{color:var(--accent);text-decoration:none;font-weight:500}
+.sitefoot a:hover{text-decoration:underline}
+.sitefoot a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.sitefoot .legal{font-size:11.5px;color:var(--dim2)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media print{.controls,.iconbtn{display:none}.stat,.panel,.monthgrid{box-shadow:none}}
+@media (max-width:640px){
+  body{padding-left:14px;padding-right:14px}
+  h1{font-size:26px}
+  .controls{margin-left:-8px;margin-right:-8px;padding:10px 12px}
+  .monthgrid{grid-template-columns:repeat(7,1fr) 58px}
+  .wkcell{padding:4px} .wkcell .lbl{display:none} .wkcell .v{font-size:12px}
+  .cell{min-height:56px;padding:4px} .cell .rr{font-size:11.5px} .cell .n{display:none}
+  .stat .v{font-size:19px} .stat{padding:12px 14px}
+  .chip small{display:none}
+  .dow{padding:7px 2px;font-size:10px}
+}
+
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <div>
+    <div class="eyebrow">Francis Chizurumoke</div>
+    <h1>Trading Performance Analysis Portfolio</h1>
+    <div class="sub" id="subtitle"></div>
+  </div>
+  <button class="iconbtn" id="theme" aria-label="Toggle light/dark theme">Theme</button>
+</header>
+
+<div class="source-note" role="note">
+  <b>Source:</b> Trading Performance &amp; Data Management Journal (<span id="ntrades"></span> trades). 3R and 2R are the two outcome models logged per trade.
+  Pair groups: 1 = EURUSD, GBPUSD · 2 = EURCAD, GBPCAD · 3 = GOLD, SILVER. Multi-pair entries (e.g. “GOLD &amp; SILVER”) count as one trade.
+  Drawdown is measured peak-to-trough on cumulative R from a zero baseline.
+</div>
+
+<div class="controls" role="group" aria-label="Filters">
+  <div class="ctl">
+    <span class="cl">Outcome model</span>
+    <div class="seg" id="modelseg">
+      <button data-m="r3" aria-pressed="true">3R</button>
+      <button data-m="r2" aria-pressed="false">2R</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <span class="cl">Pair groups</span>
+    <div class="chips" id="chips"></div>
+    <button class="linkbtn" id="allbtn">Select all</button>
+  </div>
+</div>
+
+<div class="statrow" id="statrow"></div>
+
+<section class="block">
+  <div class="blocktitle">Equity curve</div>
+  <div class="blocksub">Cumulative R trade by trade. Red shading is drawdown from the running peak. Hover to inspect, click a point to open that day.</div>
+  <div class="panel">
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>Cumulative R</span>
+      <span><i style="background:var(--dim2);height:2px"></i>Running peak</span>
+      <span><i class="dd"></i>Drawdown</span>
+    </div>
+    <div id="equity"></div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="blocktitle">Weekly RR distribution</div>
+  <div class="blocksub">Each bar is one calendar week (Sun–Sat). Hover a bar for the exact total.</div>
+  <div class="panel"><div id="weekchart"></div></div>
+</section>
+
+<div id="calendars"></div>
+
+</main>
+
+<footer class="sitefoot">
+  <div class="byline">Francis Chizurumoke · Trading Performance Analysis Portfolio</div>
+  <div>Built with AI-assisted coding (ChatGPT and Claude). My contribution: data collection, workflow design, data preparation and validation, and metric specification.</div>
+  <nav aria-label="Related portfolio pieces">
+    <a href="https://keen-aphid-255.notion.site/1d6b72eefb448311bc0881252fd9eff1?v=351b72eefb448242bc4708990c24df04" target="_blank" rel="noopener noreferrer">Notion trading journal</a>
+    <a href="https://docs.google.com/spreadsheets/d/1Zb0AqxhuoKOI4FfsY-HOJ8ML6g8eN37X/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Excel analysis (Google Sheet)</a>
+  </nav>
+  <div class="legal">Results are R-multiples taken from a personal trading journal. They are not audited brokerage statements, realised account returns, or a forecast of future performance. Nothing on this page is financial advice. &copy; 2026 Francis Chizurumoke. All rights reserved.</div>
+</footer>
+
+<div class="tip" id="tip"></div>
+<dialog id="dlg" aria-labelledby="dtitle">
+  <div class="mh">
+    <button class="mbtn" id="dprev" aria-label="Previous trading day">‹</button>
+    <h3 id="dtitle"></h3>
+    <span class="tot num" id="dtot"></span>
+    <button class="mbtn" id="dnext" aria-label="Next trading day">›</button>
+    <button class="mbtn" id="dclose" aria-label="Close">✕</button>
+  </div>
+  <div class="mbody" id="dbody"></div>
+</dialog>
+
+<script>
+const TRADES = [{"n": 1, "d": "2026-01-06", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 2, "d": "2026-01-07", "p": "EURUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": 0, "r2": 0}, {"n": 3, "d": "2026-01-08", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 4, "d": "2026-01-09", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 5, "d": "2026-01-09", "p": "SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": 1.84, "r2": 2}, {"n": 6, "d": "2026-01-13", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 7, "d": "2026-01-13", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 8, "d": "2026-01-13", "p": "GBPCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 9, "d": "2026-01-13", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Limit", "r3": -1, "r2": -1}, {"n": 10, "d": "2026-01-14", "p": "EURUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 11, "d": "2026-01-14", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 12, "d": "2026-01-20", "p": "EURUSD & GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 13, "d": "2026-01-20", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 14, "d": "2026-01-20", "p": "EURCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 15, "d": "2026-01-20", "p": "EURCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 16, "d": "2026-01-21", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": -0.21, "r2": -0.21}, {"n": 17, "d": "2026-01-21", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": 0, "r2": 0}, {"n": 18, "d": "2026-01-22", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -0.564, "r2": -0.56}, {"n": 19, "d": "2026-01-22", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 20, "d": "2026-01-22", "p": "GBPCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 21, "d": "2026-01-27", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 22, "d": "2026-01-27", "p": "EURCAD & GBPCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 1, "r2": 1}, {"n": 23, "d": "2026-01-27", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 24, "d": "2026-01-27", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": 0, "r2": 2}, {"n": 25, "d": "2026-01-29", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -0.146, "r2": -0.15}, {"n": 26, "d": "2026-01-29", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Limit", "r3": 2.65, "r2": 2}, {"n": 27, "d": "2026-01-30", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": -0.617, "r2": -0.62}, {"n": 28, "d": "2026-02-02", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": -0.187, "r2": -0.19}, {"n": 29, "d": "2026-02-05", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 30, "d": "2026-02-10", "p": "SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": -0.659, "r2": 0}, {"n": 31, "d": "2026-02-10", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 32, "d": "2026-02-11", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -0.636, "r2": -0.64}, {"n": 33, "d": "2026-02-12", "p": "GBPUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": 0, "r2": 2}, {"n": 34, "d": "2026-02-16", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -0.36, "r2": -0.36}, {"n": 35, "d": "2026-02-16", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 36, "d": "2026-02-16", "p": "SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 37, "d": "2026-02-19", "p": "SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": 0, "r2": 2}, {"n": 38, "d": "2026-02-20", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 39, "d": "2026-02-20", "p": "SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 40, "d": "2026-02-23", "p": "GBPCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 41, "d": "2026-02-24", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 0, "r2": 0}, {"n": 42, "d": "2026-02-25", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 43, "d": "2026-02-25", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 44, "d": "2026-02-26", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": -0.143, "r2": -0.14}, {"n": 45, "d": "2026-02-27", "p": "GBPUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 46, "d": "2026-02-27", "p": "SILVER", "g": 3, "dir": "Buy", "o": "Limit", "r3": 0, "r2": 0}, {"n": 47, "d": "2026-03-03", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 48, "d": "2026-03-03", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 49, "d": "2026-03-11", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 50, "d": "2026-03-13", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 51, "d": "2026-03-13", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 52, "d": "2026-03-13", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 53, "d": "2026-03-13", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 54, "d": "2026-03-17", "p": "GOLD & SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": -0.5, "r2": -0.5}, {"n": 55, "d": "2026-03-18", "p": "GBPCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 56, "d": "2026-03-18", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": 0, "r2": 0}, {"n": 57, "d": "2026-03-18", "p": "EURCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 58, "d": "2026-03-18", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 59, "d": "2026-03-19", "p": "EURUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 60, "d": "2026-03-19", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 0, "r2": 0}, {"n": 61, "d": "2026-03-24", "p": "GOLD & SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": 2.135, "r2": 1.64}, {"n": 62, "d": "2026-03-24", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 63, "d": "2026-03-27", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": 0, "r2": 0}, {"n": 64, "d": "2026-03-30", "p": "EURCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 65, "d": "2026-04-02", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 2.53, "r2": 2}, {"n": 66, "d": "2026-04-07", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 67, "d": "2026-04-09", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 68, "d": "2026-04-09", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 69, "d": "2026-04-09", "p": "EURUSD & GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0.705, "r2": 1}, {"n": 70, "d": "2026-04-10", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Market", "r3": 0.71, "r2": 0.71}, {"n": 71, "d": "2026-04-15", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -0.193, "r2": -0.19}, {"n": 72, "d": "2026-04-16", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 73, "d": "2026-04-16", "p": "GOLD & SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": 1, "r2": 0.5}, {"n": 74, "d": "2026-04-17", "p": "EURUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": -0.184, "r2": -0.18}, {"n": 75, "d": "2026-04-17", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 0, "r2": 0}, {"n": 76, "d": "2026-04-22", "p": "GOLD & SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": -0.418, "r2": 0.58}, {"n": 77, "d": "2026-04-27", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Limit", "r3": 3, "r2": 2}, {"n": 78, "d": "2026-04-28", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 0, "r2": 0}, {"n": 79, "d": "2026-05-04", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 80, "d": "2026-05-04", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 0, "r2": 2}, {"n": 81, "d": "2026-05-07", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 82, "d": "2026-05-12", "p": "GBPUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": -0.232, "r2": -0.23}, {"n": 83, "d": "2026-05-13", "p": "EURUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 84, "d": "2026-05-14", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": -0.516, "r2": -0.52}, {"n": 85, "d": "2026-05-21", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 86, "d": "2026-05-22", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 87, "d": "2026-05-27", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": -0.32, "r2": -0.32}, {"n": 88, "d": "2026-05-28", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 89, "d": "2026-06-01", "p": "GBPCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 2.21, "r2": 2}, {"n": 90, "d": "2026-06-01", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0, "r2": 2}, {"n": 91, "d": "2026-06-01", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 92, "d": "2026-06-02", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 93, "d": "2026-06-03", "p": "EURUSD", "g": 1, "dir": "Sell", "o": "Limit", "r3": 3, "r2": 2}, {"n": 94, "d": "2026-06-03", "p": "EURCAD & GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -0.95, "r2": -0.95}, {"n": 95, "d": "2026-06-05", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 96, "d": "2026-06-09", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -0.03, "r2": -0.03}, {"n": 97, "d": "2026-06-09", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Market", "r3": -0.246, "r2": -0.25}, {"n": 98, "d": "2026-06-09", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Market", "r3": -0.479, "r2": -0.48}, {"n": 99, "d": "2026-06-10", "p": "GBPCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 100, "d": "2026-06-12", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 101, "d": "2026-06-16", "p": "EURCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 2.73, "r2": 2}, {"n": 102, "d": "2026-06-16", "p": "SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 103, "d": "2026-06-18", "p": "GBPUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": 0, "r2": 2}, {"n": 104, "d": "2026-06-18", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 105, "d": "2026-06-22", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 106, "d": "2026-06-23", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 107, "d": "2026-06-23", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 108, "d": "2026-06-23", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 109, "d": "2026-06-25", "p": "GOLD & SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": -0.171, "r2": -0.17}, {"n": 110, "d": "2026-06-25", "p": "GOLD", "g": 3, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 111, "d": "2026-06-29", "p": "EURUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 112, "d": "2026-06-29", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 113, "d": "2026-07-01", "p": "GOLD & SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 114, "d": "2026-07-03", "p": "GBPCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": -0.51, "r2": -0.51}, {"n": 115, "d": "2026-07-03", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0, "r2": 0}, {"n": 116, "d": "2026-07-06", "p": "EURCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 117, "d": "2026-07-10", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 118, "d": "2026-07-10", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 119, "d": "2026-07-15", "p": "SILVER", "g": 3, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 120, "d": "2026-07-15", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -0.662, "r2": -0.66}, {"n": 121, "d": "2026-07-15", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 122, "d": "2026-07-16", "p": "GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 123, "d": "2026-07-17", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Limit", "r3": 3, "r2": 2}, {"n": 124, "d": "2026-07-20", "p": "EURCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 125, "d": "2026-07-21", "p": "GBPUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 126, "d": "2026-07-22", "p": "GBPUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": 0, "r2": 2}, {"n": 127, "d": "2026-07-23", "p": "EURUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": 0, "r2": 2}, {"n": 128, "d": "2026-07-23", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -0.413, "r2": -0.41}, {"n": 129, "d": "2026-07-24", "p": "SILVER", "g": 3, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 130, "d": "2026-07-24", "p": "EURUSD & GBPUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 131, "d": "2026-07-24", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 132, "d": "2026-07-24", "p": "EURUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 133, "d": "2026-07-28", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -1, "r2": -1}, {"n": 134, "d": "2026-07-29", "p": "EURUSD & GBPUSD", "g": 1, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 135, "d": "2026-07-29", "p": "GBPCAD", "g": 2, "dir": "Sell", "o": "Market", "r3": -0.407, "r2": -0.41}, {"n": 136, "d": "2026-07-30", "p": "EURCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": -1, "r2": -1}, {"n": 137, "d": "2026-07-30", "p": "GBPUSD", "g": 1, "dir": "Sell", "o": "Market", "r3": 3, "r2": 2}, {"n": 138, "d": "2026-07-30", "p": "EURCAD", "g": 2, "dir": "Buy", "o": "Market", "r3": 3, "r2": 2}, {"n": 139, "d": "2026-07-30", "p": "GOLD", "g": 3, "dir": "Buy", "o": "Market", "r3": 2.14, "r2": 2}];
+
+const GROUPS = {
+  1:{name:'Group 1', pairs:'EURUSD · GBPUSD', color:'var(--g1)'},
+  2:{name:'Group 2', pairs:'EURCAD · GBPCAD', color:'var(--g2)'},
+  3:{name:'Group 3', pairs:'GOLD · SILVER',   color:'var(--g3)'},
+};
+const MNAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DOWS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const state={model:'r3',groups:new Set([1,2,3]),open:null};
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const rnd=n=>Math.round(n*1000)/1000;
+function fmt(n,sign=true){
+  const r=Math.round(n*100)/100;
+  if(r===0) return "0";
+  return (r>0&&sign?"+":"")+r.toFixed(2).replace(/\.00$/,"").replace(/(\.\d)0$/,"$1");
+}
+const cls=n=>n>0?"pos":(n<0?"neg":"flat");
+const utc=k=>new Date(k+"T00:00:00Z");
+const iso=d=>d.toISOString().slice(0,10);
+const weekStart=d=>{const x=new Date(d);x.setUTCDate(x.getUTCDate()-x.getUTCDay());return x;};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function longDate(k){return utc(k).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});}
+function shortDate(k){return utc(k).toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});}
+
+$('ntrades').textContent=TRADES.length;
+const ALL_DATES=TRADES.map(t=>t.d).sort();
+const FIRST=ALL_DATES[0], LAST=ALL_DATES[ALL_DATES.length-1];
+$('subtitle').textContent=`All pairs · ${shortDate(FIRST)} – ${shortDate(LAST)} ${LAST.slice(0,4)} · ${TRADES.length} trades`;
+
+/* ---------- compute everything from filters ---------- */
+function compute(){
+  const m=state.model;
+  const trades=TRADES.filter(t=>state.groups.has(t.g)).map(t=>({...t,v:t[m]}));
+  const daily={};
+  let cum=0,peak=0,maxDD=0,ddIdx=0;
+  const curve=[{i:0,cum:0,peak:0,dd:0,t:null}];
+  let wins=0,losses=0,be=0,gp=0,gl=0;
+  trades.forEach((t,i)=>{
+    (daily[t.d]??={rr:0,n:0,trades:[]});
+    daily[t.d].rr=rnd(daily[t.d].rr+t.v); daily[t.d].n++; daily[t.d].trades.push(t);
+    cum=rnd(cum+t.v); if(cum>peak) peak=cum;
+    const dd=rnd(cum-peak);
+    if(dd<maxDD){maxDD=dd;ddIdx=i+1;}
+    t.cum=cum;
+    curve.push({i:i+1,cum,peak,dd,t});
+    if(t.v>0){wins++;gp+=t.v;} else if(t.v<0){losses++;gl+=-t.v;} else be++;
+  });
+  const days=Object.keys(daily).sort();
+  const total=rnd(cum);
+  const green=days.filter(k=>daily[k].rr>0).length, red=days.filter(k=>daily[k].rr<0).length;
+  let best=null,worst=null;
+  days.forEach(k=>{ if(best===null||daily[k].rr>daily[best].rr) best=k; if(worst===null||daily[k].rr<daily[worst].rr) worst=k; });
+  const weeks={};
+  days.forEach(k=>{const w=iso(weekStart(utc(k)));(weeks[w]??={rr:0,n:0});weeks[w].rr=rnd(weeks[w].rr+daily[k].rr);weeks[w].n+=daily[k].n;});
+  return {trades,daily,days,curve,total,maxDD,ddIdx,wins,losses,be,gp,gl,green,red,flat:days.length-green-red,best,worst,weeks};
+}
+
+/* ---------- stats ---------- */
+function renderStats(D){
+  const other=state.model==='r3'?'r2':'r3';
+  const otherTotal=rnd(TRADES.filter(t=>state.groups.has(t.g)).reduce((a,t)=>a+t[other],0));
+  const n=D.trades.length, nd=D.days.length;
+  const pf=D.gl>0?(D.gp/D.gl):null;
+  const S=[
+    ["Total RR",fmt(D.total),cls(D.total),`${other==='r3'?'3R':'2R'} model: ${fmt(otherTotal)}`],
+    ["Trading days",nd,"",""],
+    ["Trades logged",n,"",""],
+    ["Win rate",n?(D.wins/n*100).toFixed(1)+"%":"–","",`${D.wins}W · ${D.losses}L · ${D.be}BE`],
+    ["Expectancy / trade",n?fmt(D.total/n):"–",n?cls(D.total):"",""],
+    ["Profit factor",pf===null?(D.gp>0?"∞":"–"):pf.toFixed(2),"",""],
+    ["Max drawdown",D.maxDD<0?fmt(D.maxDD):"0",D.maxDD<0?"neg":"",""],
+    ["Green / Red / Flat days",`${D.green} / ${D.red} / ${D.flat}`,"",""],
+    ["Avg RR / day",nd?fmt(D.total/nd):"–",nd?cls(D.total):"",""],
+    ["Best day",D.best?fmt(D.daily[D.best].rr):"–",D.best&&D.daily[D.best].rr>0?"pos":"",D.best?shortDate(D.best):""],
+    ["Worst day",D.worst?fmt(D.daily[D.worst].rr):"–",D.worst&&D.daily[D.worst].rr<0?"neg":"",D.worst?shortDate(D.worst):""],
+  ];
+  $('statrow').innerHTML=S.map(([k,v,c,s])=>`<div class="stat"><div class="k">${k}</div><div class="v num ${c}${String(v).length>9?' sm':''}">${v}</div>${s?`<div class="s">${s}</div>`:''}</div>`).join('');
+}
+
+/* ---------- tooltip ---------- */
+const tip=$('tip');
+function showTip(html,e){
+  tip.innerHTML=html;tip.style.display='block';
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  let x=e.clientX+14,y=e.clientY+14;
+  if(x+w>innerWidth-8)x=e.clientX-w-14;
+  if(y+h>innerHeight-8)y=e.clientY-h-14;
+  tip.style.left=Math.max(8,x)+"px";tip.style.top=Math.max(8,y)+"px";
+}
+const hideTip=()=>{tip.style.display='none';};
+
+/* ---------- equity curve ---------- */
+function niceStep(raw){const p=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p;}
+function renderEquity(D){
+  const host=$('equity');
+  if(!D.trades.length){host.innerHTML='<div class="empty-note">No trades match the current filters.</div>';return;}
+  const W=Math.max(host.clientWidth,320),H=W<520?240:300;
+  const pl=44,pr=14,pt=14,pb=28,pw=W-pl-pr,ph=H-pt-pb;
+  const N=D.curve.length-1;
+  let lo=Math.min(0,...D.curve.map(p=>p.cum)),hi=Math.max(0,...D.curve.map(p=>p.peak));
+  const step=niceStep((hi-lo||1)/5);lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
+  const X=i=>pl+(N?i/N:0)*pw, Y=v=>pt+(hi-v)/(hi-lo)*ph;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Equity curve">`;
+  for(let v=lo;v<=hi+1e-9;v+=step){
+    s+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.5:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 4"'}/>`;
+    s+=`<text x="${pl-7}" y="${Y(v)+3.5}" font-size="10" fill="var(--dim2)" text-anchor="end" font-family="var(--monofont)">${rnd(v)}</text>`;
+  }
+  // month ticks
+  let lastM='';
+  D.curve.forEach(p=>{
+    if(!p.t) return;const m=p.t.d.slice(0,7);
+    if(m!==lastM){lastM=m;
+      s+=`<line x1="${X(p.i-1)}" x2="${X(p.i-1)}" y1="${pt}" y2="${H-pb}" stroke="var(--line)" stroke-width="1" opacity=".6"/>`;
+      s+=`<text x="${X(p.i-1)+4}" y="${H-9}" font-size="10" fill="var(--dim2)" font-family="var(--monofont)">${MNAMES[+m.slice(5)-1].slice(0,3)}</text>`;
+    }
+  });
+  // drawdown shading
+  const top=D.curve.map(p=>`${X(p.i)},${Y(p.peak)}`).join(' ');
+  const bot=D.curve.slice().reverse().map(p=>`${X(p.i)},${Y(p.cum)}`).join(' ');
+  s+=`<polygon points="${top} ${bot}" fill="var(--red)" opacity=".28"/>`;
+  s+=`<polyline points="${D.curve.map(p=>`${X(p.i)},${Y(p.peak)}`).join(' ')}" fill="none" stroke="var(--dim2)" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+  s+=`<polyline points="${D.curve.map(p=>`${X(p.i)},${Y(p.cum)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`;
+  // max DD marker
+  if(D.maxDD<0){
+    const p=D.curve[D.ddIdx],tx=X(p.i),ty=Y(p.cum);
+    const anchor=tx>W-120?'end':'start',lx=anchor==='end'?tx-8:tx+8;
+    s+=`<circle cx="${tx}" cy="${ty}" r="4" fill="var(--red)" stroke="var(--panel)" stroke-width="1.5"/>`;
+    s+=`<text x="${lx}" y="${ty+16}" font-size="10.5" fill="var(--red)" text-anchor="${anchor}" font-family="var(--monofont)" font-weight="600">Max DD ${fmt(D.maxDD)}R</text>`;
+  }
+  s+=`<line id="hl" y1="${pt}" y2="${H-pb}" stroke="var(--dim)" stroke-width="1" style="display:none"/><circle id="hd" r="4.5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2" style="display:none"/>`;
+  s+=`<rect id="hit" x="${pl}" y="${pt}" width="${pw}" height="${ph}" fill="transparent" style="cursor:pointer"/></svg>`;
+  host.innerHTML=s;
+  const svg=host.querySelector('svg'),hl=$('hl'),hd=$('hd'),hit=$('hit');
+  const idxFrom=e=>{const r=svg.getBoundingClientRect();const x=(e.clientX-r.left)*(W/r.width);return Math.max(0,Math.min(N,Math.round((x-pl)/pw*N)));};
+  const move=e=>{
+    const i=idxFrom(e),p=D.curve[i];
+    hl.setAttribute('x1',X(i));hl.setAttribute('x2',X(i));hl.style.display='';
+    hd.setAttribute('cx',X(i));hd.setAttribute('cy',Y(p.cum));hd.style.display='';
+    if(!p.t){showTip(`Start<br>Cumulative: <b class="num">0</b>`,e);return;}
+    const t=p.t;
+    showTip(`<b>#${t.n} · ${esc(t.p)}</b> <span style="color:var(--dim)">${t.dir}</span><br>${shortDate(t.d)}<br>Trade: <b class="num ${cls(t.v)}">${fmt(t.v)}R</b><br>Cumulative: <b class="num">${fmt(p.cum,false)}R</b><br>Drawdown: <b class="num ${p.dd<0?'neg':''}">${p.dd<0?fmt(p.dd):'0'}R</b>`,e);
+  };
+  hit.addEventListener('pointermove',move);
+  hit.addEventListener('pointerleave',()=>{hl.style.display='none';hd.style.display='none';hideTip();});
+  hit.addEventListener('click',e=>{const p=D.curve[idxFrom(e)];if(p.t)openDay(p.t.d);});
+}
+
+/* ---------- weekly chart ---------- */
+function renderWeeks(D){
+  const host=$('weekchart');
+  const keys=[];
+  for(let d=weekStart(utc(FIRST));iso(d)<=LAST;d.setUTCDate(d.getUTCDate()+7))keys.push(iso(d));
+  const colW=34,W=Math.max(keys.length*colW,320),H=190,PADB=26,PADT=14;
+  const maxAbs=Math.max(1,...keys.map(k=>Math.abs(D.weeks[k]?.rr||0)));
+  const midY=PADT+(H-PADT-PADB)/2,scale=(H-PADT-PADB)/2/maxAbs;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+  s+=`<line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--line)"/>`;
+  keys.forEach((k,i)=>{
+    const cx=17+i*colW,w=D.weeks[k];
+    if(w){
+      const h=Math.abs(w.rr)*scale,y=w.rr>=0?midY-h:midY,col=w.rr>0?"var(--green)":w.rr<0?"var(--red)":"var(--flat)";
+      s+=`<rect class="wk-bar" data-k="${k}" x="${cx-11}" y="${y}" width="22" height="${Math.max(h,1.5)}" rx="3" fill="${col}"/>`;
+    }
+    if(i%2===0)s+=`<text x="${cx}" y="${H-8}" font-size="9" fill="var(--dim2)" text-anchor="middle" font-family="var(--monofont)">${k.slice(5).replace('-','/')}</text>`;
+  });
+  host.innerHTML=s+`</svg>`;
+  host.querySelectorAll('.wk-bar').forEach(b=>{
+    b.addEventListener('pointermove',e=>{
+      const k=b.dataset.k,w=D.weeks[k],end=utc(k);end.setUTCDate(end.getUTCDate()+6);
+      showTip(`Week of ${shortDate(k)} – ${shortDate(iso(end))}<br>Total: <b class="num ${cls(w.rr)}">${fmt(w.rr)}R</b> · ${w.n} trade${w.n>1?'s':''}`,e);
+    });
+    b.addEventListener('pointerleave',hideTip);
+  });
+}
+
+/* ---------- calendars ---------- */
+function renderCalendars(D){
+  const wrap=$('calendars');wrap.innerHTML='';
+  const f=utc(FIRST),l=utc(LAST);
+  const months=[];
+  for(let y=f.getUTCFullYear(),m=f.getUTCMonth();y<l.getUTCFullYear()||(y===l.getUTCFullYear()&&m<=l.getUTCMonth());){
+    months.push([y,m]);m++;if(m>11){m=0;y++;}
+  }
+  months.forEach(([y,m])=>{
+    const first=new Date(Date.UTC(y,m,1)),last=new Date(Date.UTC(y,m+1,0));
+    const gridEnd=weekStart(last);gridEnd.setUTCDate(gridEnd.getUTCDate()+6);
+    let mRR=0,mN=0,mD=0;
+    D.days.forEach(k=>{const d=utc(k);if(d.getUTCFullYear()===y&&d.getUTCMonth()===m){mRR+=D.daily[k].rr;mN+=D.daily[k].n;mD++;}});
+    mRR=rnd(mRR);
+    const head=document.createElement('div');head.className='monthhead';
+    head.innerHTML=`<h2>${MNAMES[m]} ${y}</h2><div class="mstat">${mD} days · ${mN} trades · <b class="${cls(mRR)}">${fmt(mRR)}R</b></div>`;
+    wrap.appendChild(head);
+    const grid=document.createElement('div');grid.className='monthgrid';
+    let h=DOWS.map(d=>`<div class="dow">${d}</div>`).join('')+`<div class="dow">Week</div>`;
+    const cur=weekStart(first);
+    while(cur<=gridEnd){
+      const rowStart=iso(cur);
+      for(let i=0;i<7;i++){
+        const inM=cur.getUTCMonth()===m,k=iso(cur),rec=D.daily[k];
+        if(inM&&rec){
+          const c=rec.rr>0?'var(--green)':rec.rr<0?'var(--red)':'var(--flat)';
+          const inten=Math.round(14+Math.min(Math.abs(rec.rr)/3,1)*30);
+          h+=`<button class="cell has" data-k="${k}" style="--c:${c};--i:${inten}%" aria-label="${longDate(k)}: ${fmt(rec.rr)}R, ${rec.n} trades. Open trade list"><div class="d">${cur.getUTCDate()}</div><div class="rr num ${cls(rec.rr)}">${fmt(rec.rr)}</div><div class="n">${rec.n} trade${rec.n>1?'s':''}</div></button>`;
+        }else h+=`<div class="cell${inM?'':' empty'}"><div class="d">${cur.getUTCDate()}</div></div>`;
+        cur.setUTCDate(cur.getUTCDate()+1);
+      }
+      const w=D.weeks[rowStart];
+      h+=`<div class="wkcell"><div class="lbl">Week total</div><div class="v num ${w?cls(w.rr):'nodata'}">${w?fmt(w.rr):'–'}</div></div>`;
+    }
+    grid.innerHTML=h;wrap.appendChild(grid);
+  });
+  wrap.querySelectorAll('.cell.has').forEach(b=>b.addEventListener('click',()=>openDay(b.dataset.k)));
+}
+
+/* ---------- day modal ---------- */
+const dlg=$('dlg');
+function renderDay(){
+  if(!state.open)return;
+  const D=state.D,k=state.open,rec=D.daily[k];
+  const i=D.days.indexOf(k);
+  $('dprev').disabled=i<=0;$('dnext').disabled=i<0||i>=D.days.length-1;
+  $('dtitle').textContent=longDate(k);
+  if(!rec){$('dtot').textContent='';$('dbody').innerHTML='<div class="empty-note">No trades on this day for the current filters.</div>';return;}
+  const m=state.model;
+  const sum=(key)=>rnd(rec.trades.reduce((a,t)=>a+t[key],0));
+  $('dtot').className='tot num '+cls(rec.rr);$('dtot').textContent=fmt(rec.rr)+'R';
+  const w=rec.trades.filter(t=>t.v>0).length,l=rec.trades.filter(t=>t.v<0).length,b=rec.n-w-l;
+  const rows=rec.trades.map(t=>`<tr>
+    <td class="num" style="color:var(--dim)">${t.n}</td>
+    <td><span class="gd" style="--c:${GROUPS[t.g].color}"></span>${esc(t.p)}</td>
+    <td class="side">${t.dir} · ${t.o}</td>
+    <td class="r num ${cls(t.r3)} ${m==='r3'?'act':''}">${fmt(t.r3)}</td>
+    <td class="r num ${cls(t.r2)} ${m==='r2'?'act':''}">${fmt(t.r2)}</td>
+    <td class="r num">${fmt(t.cum,false)}</td></tr>`).join('');
+  $('dbody').innerHTML=`<div class="msum"><span><b>${rec.n}</b> trade${rec.n>1?'s':''}</span><span><b class="pos">${w}</b> win · <b class="neg">${l}</b> loss · <b>${b}</b> BE</span><span>Day 3R: <b class="${cls(sum('r3'))}">${fmt(sum('r3'))}</b> · Day 2R: <b class="${cls(sum('r2'))}">${fmt(sum('r2'))}</b></span></div>
+  <table><thead><tr><th>#</th><th>Pair</th><th>Side · Order</th><th class="r">3R</th><th class="r">2R</th><th class="r">Cum (${m==='r3'?'3R':'2R'})</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="hint">Use ← / → to step between trading days. Cumulative R reflects the active filters.</div>`;
+}
+function openDay(k){state.open=k;renderDay();if(!dlg.open)dlg.showModal();}
+function stepDay(dir){const D=state.D,i=D.days.indexOf(state.open)+dir;if(i>=0&&i<D.days.length){state.open=D.days[i];renderDay();}}
+$('dprev').onclick=()=>stepDay(-1);$('dnext').onclick=()=>stepDay(1);
+$('dclose').onclick=()=>dlg.close();
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close();});
+dlg.addEventListener('close',()=>{state.open=null;});
+dlg.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'){stepDay(-1);e.preventDefault();}else if(e.key==='ArrowRight'){stepDay(1);e.preventDefault();}});
+
+/* ---------- controls ---------- */
+function renderChips(){
+  $('chips').innerHTML=[1,2,3].map(g=>`<button class="chip" data-g="${g}" style="--c:${GROUPS[g].color}" aria-pressed="${state.groups.has(g)}"><span class="dot"></span>${GROUPS[g].name} <small>${GROUPS[g].pairs}</small></button>`).join('');
+  $('chips').querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>{
+    const g=+b.dataset.g;
+    if(state.groups.has(g)){if(state.groups.size>1)state.groups.delete(g);}else state.groups.add(g);
+    update();
+  }));
+  $('allbtn').style.visibility=state.groups.size===3?'hidden':'visible';
+}
+$('allbtn').onclick=()=>{state.groups=new Set([1,2,3]);update();};
+$('modelseg').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{state.model=b.dataset.m;update();}));
+$('theme').onclick=()=>{
+  const r=document.documentElement;
+  const dark=r.dataset.theme?r.dataset.theme==='dark':!matchMedia('(prefers-color-scheme: light)').matches;
+  r.dataset.theme=dark?'light':'dark';
+};
+
+function update(){
+  document.querySelectorAll('#modelseg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===state.model));
+  renderChips();
+  const D=state.D=compute();
+  renderStats(D);renderEquity(D);renderWeeks(D);renderCalendars(D);
+  if(dlg.open)renderDay();
+}
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>renderEquity(state.D),120);});
+update();
+</script>
+</body>
+</html>
