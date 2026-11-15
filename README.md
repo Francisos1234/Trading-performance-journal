@@ -2,7 +2,7 @@
 
 An interactive, single-file HTML dashboard that turns a trading journal into an R-multiple calendar, equity curve and weekly distribution, with a toggle between two outcome models (3R and 2R).
 
-**Live demo:** https://github.com/Francisos1234/trading-performance-journal/
+**Live demo:** https://francisos1234.github.io/trading-performance-journal/
 
 > Built by **Francis Chizurumoke** with AI-assisted coding (ChatGPT and Claude). My contribution: data collection, workflow design, data preparation and validation, and specifying the metrics.
 
@@ -14,6 +14,30 @@ An interactive, single-file HTML dashboard that turns a trading journal into an 
 - Switch between the **3R** and **2R** outcome models, and filter by pair group
 - Day-by-day detail view
 - Light and dark themes
+
+## Screenshots
+
+The screenshots below show the dashboard's main views. Select any image to open it at full size.
+
+### Dashboard overview
+
+[![Dashboard overview — light theme](01-dashboard-overview-light.png)](01-dashboard-overview-light.png)
+
+### Equity curve and weekly R distribution
+
+| Light theme | Dark theme |
+| --- | --- |
+| [![Equity curve and weekly R distribution — light theme](02-equity-curve-weekly-rr-light.png)](02-equity-curve-weekly-rr-light.png) | [![Equity curve and weekly R distribution — dark theme](03-equity-curve-weekly-rr-dark.png)](03-equity-curve-weekly-rr-dark.png) |
+
+### Monthly performance calendar
+
+| Light theme | Dark theme |
+| --- | --- |
+| [![Monthly performance calendar — light theme](04-monthly-calendar-light.png)](04-monthly-calendar-light.png) | [![Monthly performance calendar — dark theme](05-monthly-calendar-dark.png)](05-monthly-calendar-dark.png) |
+
+### Daily trade breakdown
+
+[![Daily detail view](06-day-detail-modal-light.png)](06-day-detail-modal-light.png)
 
 ## How the data was prepared
 
