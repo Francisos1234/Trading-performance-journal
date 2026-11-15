@@ -41,10 +41,23 @@ The screenshots below show the dashboard's main views. Select any image to open 
 
 ## How the data was prepared
 
-1. Trades are logged manually in a Notion journal (R-multiples).
-2. The journal is exported to CSV and cleaned and summarised in Excel.
-3. The Excel workbook includes a Method & QA sheet with validation checks (trade count, sequence continuity, reconciliation to the journal's totals, group totals, drawdown).
-4. This dashboard visualises the same dataset.
+The dashboard is based on a trading journal and a separate analysis workbook. The screenshots below show the source journal and the Excel analysis used to prepare and validate the data.
+
+### Notion trading journal
+
+Trades are logged manually in a Notion journal using R-multiples.
+
+[![Compiled Notion trading journal](7-%20Compiled%20Notion%20Journal.png)](7-%20Compiled%20Notion%20Journal.png)
+
+### Excel analysis and validation
+
+The journal is exported to CSV, then cleaned and summarised in Excel. The workbook includes a Method & QA sheet with validation checks covering trade count, sequence continuity, reconciliation to the journal's totals, group totals and drawdown.
+
+| Workbook overview | Performance detail |
+| --- | --- |
+| [![Excel workbook overview](8-%20Compiled%20Excel%20sheet%20Overview.png)](8-%20Compiled%20Excel%20sheet%20Overview.png) | [![Excel performance detail](9-%20Compiled%20Excel%20sheet%20Performance%20Detail.png)](9-%20Compiled%20Excel%20sheet%20Performance%20Detail.png) |
+
+The dashboard visualises the prepared dataset.
 
 ## Notes
 
