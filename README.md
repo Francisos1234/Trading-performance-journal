@@ -2,7 +2,7 @@
 
 An interactive trading performance dashboard I built from my own manually maintained trading journal. It turns recorded trade results into an R-multiple calendar, equity curve, weekly performance distribution and detailed trade breakdown.
 
-**Live dashboard:** [Open the Trading Performance Analysis Portfolio](https://francisos1234.github.io/trading-performance-journal/)
+**Live dashboard:** [Open the Trading Performance Analysis Portfolio](https://francisos1234.github.io/Trading-performance-journal/)
 
 **GitHub repository:** [Francisos1234/Trading-performance-journal](https://github.com/Francisos1234/Trading-performance-journal)
 
@@ -228,7 +228,7 @@ There are some important boundaries to what this project establishes.
 
 The repository includes the dashboard, the screenshots of its main views, and images showing the Notion journal and Excel analysis workbook.
 
-- **[Open the live dashboard](https://francisos1234.github.io/trading-performance-journal/)**
+- **[Open the live dashboard](https://francisos1234.github.io/Trading-performance-journal/)**
 - **[View the GitHub repository](https://github.com/Francisos1234/Trading-performance-journal)**
 - **[Open the Notion trading journal](https://keen-aphid-255.notion.site/1d6b72eefb448311bc0881252fd9eff1?v=351b72eefb448242bc4708990c24df04)**
 - **[View the Excel analysis workbook online (Google Sheets)](https://docs.google.com/spreadsheets/d/1Zb0AqxhuoKOI4FfsY-HOJ8ML6g8eN37X/edit?usp=sharing)**
