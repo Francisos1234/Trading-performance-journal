@@ -46,7 +46,7 @@ I also wanted the numbers in the dashboard to be traceable to the journal and an
 
 That meant the project was not just about building a nice-looking dashboard. A major part of the work was collecting the trade data consistently, preparing it properly and checking that the figures reconciled before visualising them.
 
-## Your contribution
+## My contribution
 
 This is my own trading performance project. I personally carried out the manual data collection and designed the process used to prepare, analyse and present the results.
 
